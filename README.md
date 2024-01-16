@@ -1,2 +1,2 @@
 # video-gifer
-take a video and turn it into a high quality gif
+take a video and turn it into a high quality gif using imagemagick and gifski
