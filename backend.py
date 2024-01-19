@@ -8,6 +8,7 @@ def trim_and_encode(filepath, subtitle_track, audio_track, start_time, end_time)
         video_opencv = cv2.VideoCapture(filepath)
         height = round(video_opencv.get(cv2.CAP_PROP_FRAME_HEIGHT))
         width = round(video_opencv.get(cv2.CAP_PROP_FRAME_WIDTH))
+        video_opencv.release()
         video_resolution = f"{width}x{height}" #need this for .ass subtitle handling, https://ffmpeg.org/ffmpeg-utils.html#video-size-syntax
         file_in = ffmpeg.input(filepath)
         video = file_in.video.filter('subtitles', filepath, video_resolution, None, False, "UTF-8", subtitle_track)
