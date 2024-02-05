@@ -1,2 +1,2 @@
-python-ffmpeg
+ffmpeg-python 
 opencv-python
