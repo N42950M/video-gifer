@@ -75,7 +75,7 @@ def gifski_commands(scale, video_resolution = "0", text = ""):
 
 if __name__ == "__main__":
     filepath = r"/home/angry/Media/testvideo.mkv"
-    subtitle_track = "" #stars from 0
+    subtitle_track = 3 #stars from 0
     audio_track = 3 #starts from 0
     start_time = "00:14:23.00"
     end_time = "00:14:30.00"
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     os.chdir("temporary-directory")
     trim_and_encode(filepath, subtitle_track, audio_track, start_time, end_time, video_resolution)
     quality = 100
-    speed = 2
+    speed = "1"
     scale = False # whether to keep the gif to the original resolution
     text = "TEST"
     text_size = 100 # pointsize imagemagick
