@@ -37,7 +37,7 @@ def trim_and_encode(filepath, subtitle_track, audio_track, start_time, end_time,
     )
     file_out.run()
 
-def create_gif(quality, fps, speed, video_resolution, scale, text, text_size, text_location, font):
+def create_gif(fps, speed, video_resolution, scale, text, text_size, text_location, font):
     # requires gifski on path, no gifski python so needed manually
     # also requires imagemagick to be installed, wand didn't suit my needs so not using it
     width, height = video_resolution.split("x")
@@ -72,13 +72,13 @@ def create_gif(quality, fps, speed, video_resolution, scale, text, text_size, te
 
 def gifski_commands(scale, width = "0", height = "0", text = ""):
     if not scale and text == "":
-        subprocess.run(f"gifski --quality={quality} --fast-forward={speed} --fps={fps} -o gif.gif output.mp4",shell=True)
+        subprocess.run(f"gifski --quality=100 --fast-forward={speed} --fps={fps} -o gif.gif output.mp4",shell=True)
     elif scale and text == "":
-        subprocess.run(f"gifski --quality={quality} --fast-forward={speed} --fps={fps} --width={width} --height={height} -o gif.gif output.mp4",shell=True)
+        subprocess.run(f"gifski --quality=100 --fast-forward={speed} --fps={fps} --width={width} --height={height} -o gif.gif output.mp4",shell=True)
     elif scale:
-        subprocess.run(f"gifski --quality={quality} --fps={fps} --width={width} --height={height} -o text-gif.gif text-*.png",shell=True)
+        subprocess.run(f"gifski --quality=100 --fps={fps} --width={width} --height={height} -o text-gif.gif text-*.png",shell=True)
     else:
-        subprocess.run(f"gifski --quality={quality} --fps={fps} -o text-gif.gif text-*.png",shell=True)
+        subprocess.run(f"gifski --quality=100 --fps={fps} -o text-gif.gif text-*.png",shell=True)
 
 def imagemagick_commands(text_location, image, text_size, font, text, width):
     match text_location:
@@ -87,40 +87,55 @@ def imagemagick_commands(text_location, image, text_size, font, text, width):
         case "on_image":
             subprocess.run(f"magick {image} -gravity North -pointsize {text_size} -font {font} -fill white -stroke black -strokewidth 3 -annotate +0+0 \'{text}\' text-{image}",shell=True)
         case "above_image_speed":
-            # subprocess.run(f"magick \"{image}[0]\" temp.png",shell=True)
             width, height = Image.open(image).size
-            # subprocess.run(f"magick temp.png -background white -size {width}x -font {font} -pointsize {text_size} -gravity Center caption:\"{text}\" +swap -append captioned.png", shell=True)
-            # width, height = Image.open("captioned.png").size
             subprocess.run(f"magick -size {width}x -background white -gravity center -font {font} -pointsize {text_size} caption:\"{text}\" -set option:HH %h +delete {image} -layers coalesce -resize {width}x -background None -gravity North -splice '0x%[HH]+0+0' NULL: -size {width} -background white -gravity center -font {font} -pointsize {text_size} caption:\"{text}\" -gravity North -compose Over -layers composite -layers optimize text-{image}", shell=True)
 
-if __name__ == "__main__":
-    filepath = r"/home/angry/Media/testvideo2.mkv"
-    subtitle_track = "" #stars from 0
-    audio_track = 0 #starts from 0
-    start_time = "00:14:23.00"
-    end_time = "00:14:30.00"
-    video_resolution, fps = get_video_information(filepath)
+def initialize(cli = False, filepath = "", start_time = "", end_time = "", scale = "", speed = "", text = "", font = "", text_location = "", text_size = "", audio_track = "", subtitle_track = ""):
     os.mkdir("temporary-directory")
     os.chdir("temporary-directory")
-    trim_and_encode(filepath, subtitle_track, audio_track, start_time, end_time, video_resolution)
-    quality = 100
-    speed = "1"
-    scale = True # whether to keep the gif to the original resolution
-    text = "me when i code"
-    text_size = "Default" # pointsize imagemagick
-    text_location = "above_image" # above or on image
-    font = "Default" # font on system
+    # these would just be function parameters but it was broken when i was doing it so IDK what was going wrong -_-
+    if cli:
+        filepath = input("file: ").encode('unicode-escape').decode()
+        start_time = input("start time: ")
+        end_time = input("end time: ")
+        print("Leave the rest blank for defaults")
+        scale = input("Keep original video resolution?\nworse quality, True or False only: ")
+        speed = input("Multiply video by speed value: ")
+        text = input("text to put on the gif: ").encode('unicode-escape').decode()
+        font = input("Font(replace spaces with -): ")
+        text_location = input("text above like a caption gif(above_image) or on text like a 2010 meme(on_image): ")
+        text_size = input("Text Size (integer): ")
+        audio_track = input("Audio track (starts at 0): ")
+        subtitle_track = input("subtitle track (starts at 0, leave blank for none): ")
+    if scale == "":
+        scale = False
+    elif scale == "True":
+        scale = True
+    else:
+        scale = False
+    if speed == "":
+        speed = "1"
+    if text_location == "":
+        text_location = "above_image"
+    if text_size == "":
+        text_size = "100"
+    if audio_track == "":
+        audio_track = "0"
+    if subtitle_track == "": # lol
+        subtitle_track = ""
     match text_location:
         case "above_image":
-            if font == "Default":
+            if font == "":
                 font = "roboto-condensed-bold"
-            if text_size == "Default":
-                text_size = "100"
         case "on_image":
-            if font == "Default":
+            if font == "":
                 font = "impact"
-            if text_size == "Default":
-                text_size = "100"
     if text_location == "above_image" and speed != "1":
         text_location = "above_image_speed"
-    create_gif(quality, fps, speed, video_resolution, scale, text, text_size, text_location, font)
+    video_resolution, fps = get_video_information(filepath)
+    return filepath, start_time, end_time, scale, speed, text, font, text_location, text_size, audio_track, subtitle_track, video_resolution, fps
+
+if __name__ == "__main__":
+    filepath, start_time, end_time, scale, speed, text, font, text_location, text_size, audio_track, subtitle_track, video_resolution, fps = initialize(True)
+    trim_and_encode(filepath, subtitle_track, audio_track, start_time, end_time, video_resolution)
+    create_gif(fps, speed, video_resolution, scale, text, text_size, text_location, font)
