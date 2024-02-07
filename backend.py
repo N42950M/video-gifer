@@ -15,7 +15,6 @@ def get_video_information(filepath):
     video_resolution = f"{width}x{height}"
     return video_resolution, fps
 
-
 def trim_and_encode(filepath, subtitle_track, audio_track, start_time, end_time, video_resolution):
     #takes a file, cuts it from a certain time and reencodes
     file_in = ffmpeg.input(filepath)
