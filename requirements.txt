@@ -1,4 +1,4 @@
 ffmpeg-python 
 opencv-python
 pillow
-pyqt6
+PySide6

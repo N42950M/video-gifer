@@ -90,7 +90,8 @@ def imagemagick_commands(text_location, image, text_size, font, text, width):
             subprocess.run(f"magick -size {width}x -background white -gravity center -font {font} -pointsize {text_size} caption:\"{text}\" -set option:HH %h +delete {image} -layers coalesce -resize {width}x -background None -gravity North -splice '0x%[HH]+0+0' NULL: -size {width} -background white -gravity center -font {font} -pointsize {text_size} caption:\"{text}\" -gravity North -compose Over -layers composite -layers optimize text-{image}", shell=True)
 
 def initialize(cli = False, filepath = "", start_time = "", end_time = "", scale = "", speed = "", text = "", font = "", text_location = "", text_size = "", audio_track = "", subtitle_track = ""):
-    os.mkdir("temporary-directory")
+    if "temporary-directory" not in os.listdir():
+        os.mkdir("temporary-directory")
     os.chdir("temporary-directory")
     # these would just be function parameters but it was broken when i was doing it so IDK what was going wrong -_-
     if cli:
