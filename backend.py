@@ -16,6 +16,10 @@ def get_video_information(filepath):
     return video_resolution, fps
 
 def trim_and_encode(filepath, subtitle_track, audio_track, start_time, end_time, video_resolution):
+    video_resolution, fps = get_video_information(filepath)
+    if "temporary-directory" not in os.listdir() and "temporary-directory" not in os.getcwd():
+        os.mkdir("temporary-directory")
+        os.chdir("temporary-directory")
     #takes a file, cuts it from a certain time and reencodes
     file_in = ffmpeg.input(filepath)
     if subtitle_track != "":
@@ -36,11 +40,12 @@ def trim_and_encode(filepath, subtitle_track, audio_track, start_time, end_time,
     )
     file_out.run()
 
-def create_gif(fps, speed, video_resolution, scale, text, text_size, text_location, font):
+def create_gif(filepath, speed, original_res, text, text_size, text_location, font):
     # requires gifski on path, no gifski python so needed manually
     # also requires imagemagick to be installed, wand didn't suit my needs so not using it
+    video_resolution, fps = get_video_information(filepath)
     width, height = video_resolution.split("x")
-    gifski_commands(scale, width, height)
+    gifski_commands(original_res, width, height)
     if text != "" and speed == "1":
         file_in = ffmpeg.input("gif.gif")
         file_out = ffmpeg.output(file_in, "frame%04d.png")
@@ -55,9 +60,9 @@ def create_gif(fps, speed, video_resolution, scale, text, text_size, text_locati
                     width, height = Image.open(firstimg).size
                 imagemagick_commands(text_location, image, text_size, font, text, width)
         if text_location == "above_image":
-            scale = True
+            original_res = True
             width, height = Image.open(f"text-{firstimg}").size
-        gifski_commands(scale, width, height, text)
+        gifski_commands(original_res, width, height, text)
         shutil.move("text-gif.gif", "../text-gif.gif")
     elif text != "" and speed != "1":
         # if speed is used, gifski reconversion for better quality doesnt work (doesn't respect the set speed) so imagemagick is used directly instead
@@ -69,12 +74,12 @@ def create_gif(fps, speed, video_resolution, scale, text, text_size, text_locati
     os.chdir("../")
     shutil.rmtree("temporary-directory/")
 
-def gifski_commands(scale, width = "0", height = "0", text = ""):
-    if not scale and text == "":
+def gifski_commands(original_res, fps, width = "0", height = "0", text = ""):
+    if not original_res and text == "":
         subprocess.run(f"gifski --quality=100 --fast-forward={speed} --fps={fps} -o gif.gif output.mp4",shell=True)
-    elif scale and text == "":
+    elif original_res and text == "":
         subprocess.run(f"gifski --quality=100 --fast-forward={speed} --fps={fps} --width={width} --height={height} -o gif.gif output.mp4",shell=True)
-    elif scale:
+    elif original_res:
         subprocess.run(f"gifski --quality=100 --fps={fps} --width={width} --height={height} -o text-gif.gif text-*.png",shell=True)
     else:
         subprocess.run(f"gifski --quality=100 --fps={fps} -o text-gif.gif text-*.png",shell=True)
@@ -89,30 +94,25 @@ def imagemagick_commands(text_location, image, text_size, font, text, width):
             width, height = Image.open(image).size
             subprocess.run(f"magick -size {width}x -background white -gravity center -font {font} -pointsize {text_size} caption:\"{text}\" -set option:HH %h +delete {image} -layers coalesce -resize {width}x -background None -gravity North -splice '0x%[HH]+0+0' NULL: -size {width} -background white -gravity center -font {font} -pointsize {text_size} caption:\"{text}\" -gravity North -compose Over -layers composite -layers optimize text-{image}", shell=True)
 
-def initialize(cli = False, filepath = "", start_time = "", end_time = "", scale = "", speed = "", text = "", font = "", text_location = "", text_size = "", audio_track = "", subtitle_track = ""):
-    if "temporary-directory" not in os.listdir():
-        os.mkdir("temporary-directory")
-    os.chdir("temporary-directory")
-    # these would just be function parameters but it was broken when i was doing it so IDK what was going wrong -_-
-    if cli:
-        filepath = input("file: ").encode('unicode-escape').decode()
-        start_time = input("start time: ")
-        end_time = input("end time: ")
-        print("Leave the rest blank for defaults")
-        scale = input("Keep original video resolution?\nworse quality, True or False only: ")
-        speed = input("Multiply video by speed value: ")
-        text = input("text to put on the gif: ").encode('unicode-escape').decode()
-        font = input("Font(replace spaces with -): ")
-        text_location = input("text above like a caption gif(above_image) or on text like a 2010 meme(on_image): ")
-        text_size = input("Text Size (integer): ")
-        audio_track = input("Audio track (starts at 0): ")
-        subtitle_track = input("subtitle track (starts at 0, leave blank for none): ")
-    if scale == "":
-        scale = False
-    elif scale == "True":
-        scale = True
+def cli(filepath = "", start_time = "", end_time = "", original_res = "", speed = "", text = "", font = "", text_location = "", text_size = "", audio_track = "", subtitle_track = ""):
+    filepath = input("file: ").encode('unicode-escape').decode()
+    start_time = input("start time: ")
+    end_time = input("end time: ")
+    print("Leave the rest blank for defaults")
+    original_res = input("Keep original video resolution?\nworse quality, True or False only: ")
+    speed = input("Multiply video by speed value: ")
+    text = input("text to put on the gif: ").encode('unicode-escape').decode()
+    font = input("Font(replace spaces with -): ")
+    text_location = input("text above like a caption gif(above_image) or on text like a 2010 meme(on_image): ")
+    text_size = input("Text Size (integer): ")
+    audio_track = input("Audio track (starts at 0): ")
+    subtitle_track = input("subtitle track (starts at 0, leave blank for none): ")
+    if original_res == "":
+        original_res = False
+    elif original_res == "True":
+        original_res = True
     else:
-        scale = False
+        original_res = False
     if speed == "":
         speed = "1"
     if text_location == "":
@@ -132,10 +132,9 @@ def initialize(cli = False, filepath = "", start_time = "", end_time = "", scale
                 font = "impact"
     if text_location == "above_image" and speed != "1":
         text_location = "above_image_speed"
-    video_resolution, fps = get_video_information(filepath)
-    return filepath, start_time, end_time, scale, speed, text, font, text_location, text_size, audio_track, subtitle_track, video_resolution, fps
+    return filepath, start_time, end_time, original_res, speed, text, font, text_location, text_size, audio_track, subtitle_track
 
 if __name__ == "__main__":
-    filepath, start_time, end_time, scale, speed, text, font, text_location, text_size, audio_track, subtitle_track, video_resolution, fps = initialize(True)
-    trim_and_encode(filepath, subtitle_track, audio_track, start_time, end_time, video_resolution)
-    create_gif(fps, speed, video_resolution, scale, text, text_size, text_location, font)
+    filepath, start_time, end_time, original_res, speed, text, font, text_location, text_size, audio_track, subtitle_track = cli()
+    trim_and_encode(filepath, subtitle_track, audio_track, start_time, end_time)
+    create_gif(speed, original_res, text, text_size, text_location, font)
