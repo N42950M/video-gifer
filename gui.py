@@ -65,13 +65,14 @@ class Form(QMainWindow):
         self.file_path_edit.setText(fileName[0])
 
     def trim_video(self):
-        backend.trim_and_encode()
+        backend.trim_and_encode(self.file_path_edit.text().encode('unicode-escape').decode(), self.start_time_edit.text(), self.end_time_edit.text(), self.audio_track_edit.text(), self.subtitle_track_edit.text())
+        
 
 if __name__ == '__main__':
-    # Create the Qt Application
+    #create qt app
     app = QApplication(sys.argv)
-    # Create and show the form
+    #create and show form
     form = Form()
     form.show()
-    # Run the main Qt loop
+    #run the qt app
     sys.exit(app.exec())

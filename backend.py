@@ -15,11 +15,15 @@ def get_video_information(filepath):
     video_resolution = f"{width}x{height}"
     return video_resolution, fps
 
-def trim_and_encode(filepath, subtitle_track, audio_track, start_time, end_time, video_resolution):
+def trim_and_encode(filepath, start_time,  end_time, audio_track, subtitle_track):
     video_resolution, fps = get_video_information(filepath)
     if "temporary-directory" not in os.listdir() and "temporary-directory" not in os.getcwd():
         os.mkdir("temporary-directory")
         os.chdir("temporary-directory")
+    elif "temporary-directory" in os.listdir():
+        os.chdir("temporary-directory")
+    if audio_track == "":
+        audio_track = 0
     #takes a file, cuts it from a certain time and reencodes
     file_in = ffmpeg.input(filepath)
     if subtitle_track != "":
@@ -34,7 +38,8 @@ def trim_and_encode(filepath, subtitle_track, audio_track, start_time, end_time,
         **{"codec:v": "libx264"}, 
         **{"codec:a": "copy"}, 
         crf=15, 
-        preset="veryslow", 
+        preset="veryslow",
+        strict="experimental",
         ss=start_time,
         to=end_time
     )
@@ -136,5 +141,5 @@ def cli(filepath = "", start_time = "", end_time = "", original_res = "", speed 
 
 if __name__ == "__main__":
     filepath, start_time, end_time, original_res, speed, text, font, text_location, text_size, audio_track, subtitle_track = cli()
-    trim_and_encode(filepath, subtitle_track, audio_track, start_time, end_time)
+    trim_and_encode(filepath, start_time, end_time, audio_track, subtitle_track)
     create_gif(speed, original_res, text, text_size, text_location, font)
