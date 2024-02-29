@@ -75,7 +75,6 @@ def create_gif(filepath, speed, original_res, text, text_size, text_location, fo
         imagemagick_commands(text_location, image, text_size, font, text, width)
         shutil.move("text-gif.gif", "../text-gif.gif")
     shutil.move("gif.gif", "../gif.gif")
-    shutil.move("output.mp4", "../output.mp4")
     os.chdir("../")
     shutil.rmtree("temporary-directory/")
 
