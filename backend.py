@@ -3,7 +3,6 @@ import ffmpeg
 import cv2
 import os
 import subprocess
-import shutil
 from PIL import Image 
 
 def get_video_information(filepath):
@@ -77,15 +76,10 @@ def create_gif(filepath, original_res, speed, text, font, font_size, text_locati
             original_res = True
             width, height = Image.open(f"text-{firstimg}").size
         gifski_commands(original_res, fps, speed, width, height, text)
-        # shutil.move("text-gif.gif", "../text-gif.gif")
     elif text != "" and speed != "1":
         # if speed is used, gifski reconversion for better quality doesnt work (doesn't respect the set speed) so imagemagick is used directly instead
         image = "gif.gif"
         imagemagick_commands(text_location, image, font_size, font, text, width)
-        # shutil.move("text-gif.gif", "../text-gif.gif")
-    # shutil.move("gif.gif", "../gif.gif")
-    # os.chdir("../")
-    # shutil.rmtree("temporary-directory/")
 
 def gifski_commands(original_res, fps, speed, width = "0", height = "0", text = ""):
     if not original_res and text == "":
