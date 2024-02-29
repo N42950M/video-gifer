@@ -1,9 +1,10 @@
 #the gui
 import backend
 import sys
+import os
 import shutil
 from PySide6.QtGui import QFont
-from PySide6.QtWidgets import QApplication, QLineEdit, QPushButton, QGridLayout, QComboBox, QMainWindow, QWidget, QLabel, QFileDialog, QStyle, QCheckBox
+from PySide6.QtWidgets import QApplication, QLineEdit, QPushButton, QGridLayout, QComboBox, QMainWindow, QWidget, QLabel, QFileDialog, QStyle, QCheckBox, QVH
 
 class Form(QMainWindow):
     def __init__(self):
@@ -22,10 +23,12 @@ class Form(QMainWindow):
         self.start_time_label = QLabel("Enter the starting time:")
         self.start_time_edit = QLineEdit("")
         self.start_time_edit.setPlaceholderText("HH:MM:SS.MS")
+        self.start_time_label.setToolTip("must be in the form of HH:MM:SS.MS")
 
         self.end_time_label = QLabel("Enter the ending time:")
         self.end_time_edit = QLineEdit("")
         self.end_time_edit.setPlaceholderText("HH:MM:SS.MS")
+        self.end_time_label.setToolTip("must be in the form of HH:MM:SS.MS")
 
         self.audio_track_label = QLabel("Enter the audio track to use:")
         self.audio_track_label.setToolTip("Takes Integer Values starting from 0")
@@ -38,6 +41,7 @@ class Form(QMainWindow):
         self.subtitle_track_edit.setPlaceholderText("leave blank for none")
 
         self.trim_video_button = QPushButton("Cut Video")
+        self.trim_video_button.setToolTip("Cuts the video to the timing needed, gets it ready for GIF making")
         self.trim_video_button.clicked.connect(self.trim_video)
 
         self.keep_video = QCheckBox("Keep cut video?")
@@ -63,7 +67,7 @@ class Form(QMainWindow):
         self.font_edit = QLineEdit()
         self.font_edit.setPlaceholderText("Leave blank for defaults")
 
-        self.font_size_label = QLabel("Font Size for the text:")
+        self.font_size_label = QLabel("Font size for the text:")
         self.font_size_label.setToolTip("integer values only")
         self.font_size_edit = QLineEdit()
         self.font_size_edit.setPlaceholderText("Leave blank for defaults")
@@ -72,6 +76,11 @@ class Form(QMainWindow):
         self.text_location_box = QComboBox()
         self.text_location_box.insertItem(0, "above_image")
         self.text_location_box.insertItem(1, "on_image")
+
+        self.create_gif_button = QPushButton("Create GIF")
+        self.create_gif_button.clicked.connect(self.create_gif)
+
+        #self.clean_all_button = QPushButton("Clea")
 
         self.setWindowTitle("thing")
         layout = QGridLayout(self)
@@ -102,6 +111,7 @@ class Form(QMainWindow):
         layout.addWidget(self.font_size_edit, 22, 0)
         layout.addWidget(self.text_location_label, 23, 0)
         layout.addWidget(self.text_location_box, 24, 0)
+        layout.addWidget(self.create_gif_button, 25, 0)
 
         container = QWidget()
         container.setLayout(layout)
@@ -117,9 +127,32 @@ class Form(QMainWindow):
         filepath = self.file_path_edit.text().encode('unicode-escape').decode()
         backend.trim_and_encode(filepath, self.start_time_edit.text(), self.end_time_edit.text(), self.audio_track_edit.text(), self.subtitle_track_edit.text())
         if self.keep_video.isChecked():
-            shutil.copyfile("output.mp4", f"../output_[{self.start_time_edit.text()}-{self.end_time_edit.text()}].mp4")
+            start = self.start_time_edit.text().replace(":", "-")
+            end  = self.end_time_edit.text().replace(":", "-")
+            shutil.copyfile("output.mp4", f"../output-[{start}_{end}].mp4")
+
+    def create_gif(self):
+        filepath = self.file_path_edit.text().encode('unicode-escape').decode()
+        keep_original_res = self.keep_original_res_check.isChecked()
+        text = self.text_edit.text().encode('unicode-escape').decode()
+        speed = self.speed_edit.text()
+        if speed == "":
+            speed = "1"
+        backend.create_gif(filepath, keep_original_res, speed, text, self.font_edit.text(),self.font_size_edit.text(), self.text_location_box.currentText())
+        start = self.start_time_edit.text().replace(":", "-")
+        end  = self.end_time_edit.text().replace(":", "-")
+        if text != "":
+            shutil.move("text-gif.gif", f"../output_text-[{start}_{end}].gif")
+        else:
+            shutil.move("gif.gif", f"../output-[{start}_{end}].gif")
 
 if __name__ == '__main__':
+    #create temp directory
+    if "temporary-directory" not in os.listdir() and "temporary-directory" not in os.getcwd():
+        os.mkdir("temporary-directory")
+        os.chdir("temporary-directory")
+    elif "temporary-directory" in os.listdir():
+        os.chdir("temporary-directory")
     #create qt app
     app = QApplication(sys.argv)
     #create and show form
