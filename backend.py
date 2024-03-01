@@ -3,6 +3,8 @@ import ffmpeg
 import cv2
 import os
 import subprocess
+import requests
+from pytube import YouTube
 from PIL import Image 
 
 def get_video_information(filepath):
@@ -14,7 +16,28 @@ def get_video_information(filepath):
     video_resolution = f"{width}x{height}"
     return video_resolution, fps
 
+def download_video(filepath):
+    if "youtube.com" in filepath or "youtu.be" in filepath:
+        #split in audio and video downloading is needed due to youtube using DASH
+        video = YouTube(filepath)
+        video = video.streams.order_by('resolution').desc().first() #download highest quality video
+        video.download(filename="video.mp4")
+        audio = YouTube(filepath)
+        audio = audio.streams.get_audio_only() #download highest quality audio
+        audio.download(filename="audio.mp4")
+        video_in = ffmpeg.input("video.mp4")
+        audio_in = ffmpeg.input("audio.mp4")
+        ffmpeg.output(video_in, audio_in, "downloaded.mp4", codec='copy').overwrite_output().run()
+        os.remove("audio.mp4")
+        os.remove("video.mp4")
+    else:
+        request = requests.get(filepath, headers={'User-Agent': 'Mozilla/5.0'})
+        open("downloaded.mp4", 'wb').write(request.content)
+
 def trim_and_encode(filepath, start_time,  end_time, audio_track, subtitle_track):
+    if "http" in filepath.lower():
+        download_video(filepath)
+        filepath = "downloaded.mp4"
     video_resolution, fps = get_video_information(filepath)
     if audio_track == "":
         audio_track = 0
@@ -38,11 +61,17 @@ def trim_and_encode(filepath, start_time,  end_time, audio_track, subtitle_track
         to=end_time
     )
     file_out.run()
+    if "downloaded.mp4" in os.listdir():
+        os.remove("downloaded.mp4")
 
 def create_gif(filepath, original_res, speed, text, font, font_size, text_location):
     # requires gifski on path, no gifski python so needed manually
     # also requires imagemagick to be installed, wand didn't suit my needs so not using it
+    if "http" in filepath.lower():
+        filepath = "output.mp4"
     video_resolution, fps = get_video_information(filepath)
+    if float(fps) > 50:
+        fps = 50
     width, height = video_resolution.split("x")
     if font_size == "":
         font_size = "100"

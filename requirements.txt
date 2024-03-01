@@ -2,3 +2,5 @@ ffmpeg-python
 opencv-python
 pillow
 PySide6
+pytube
+requests
