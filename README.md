@@ -29,5 +29,5 @@ pip install -r requirements.txt
 then just run the gui file  
 python3 gui.py  
 
-also i will be adding a binary eventually because this guy spitting 🗣️🗣️🗣️🗣️🗣️🗣️🗣️🗣️🗣️🗣️🗣️🗣️🗣️🗣️🗣️🗣️🗣️🗣️  
+also i will be adding a binary eventually because this is just hilarious:
 https://old.reddit.com/r/github/comments/1at9br4/i_am_new_to_github_and_i_have_lots_to_say/
